@@ -3,54 +3,191 @@ package rest
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
-
 	"github.com/nikulnik/weather/domain"
+	"net/http"
+	"time"
 )
 
 const openWeatherMapURLFmt = "http://api.openweathermap.org/data/2.5/weather?q=%s,%s&units=metric&appid=%s"
 const openWeatherForecastURLFmt = "http://api.openweathermap.org/data/2.5/onecall?lat=%v&lon=%v&exclude=current,minutely,hourly,alerts&units=metric&appid=%s"
 
-type OpenWeatherMapClient struct {
+type OpenWeatherMapClient interface {
+	GetWeather(city, countryCode string) (*domain.WeatherWithForecast, error)
+	GetForecast(lat, lon float64, day int64) (*domain.Forecast, error)
+}
+
+type openWeatherMapClient struct {
 	ApiKey     string
 	httpClient http.Client
 }
 
 func NewOpenWeatherMapClient(apiKey string) OpenWeatherMapClient {
-	client := OpenWeatherMapClient{
+	client := &openWeatherMapClient{
 		ApiKey:     apiKey,
 		httpClient: http.Client{},
 	}
 	return client
 }
 
-func (c *OpenWeatherMapClient) GetWeather(city, countryCode string) (*domain.OpenWeatherResp, error) {
+func (c *openWeatherMapClient) GetWeather(city, countryCode string) (*domain.WeatherWithForecast, error) {
 	resp, err := http.Get(
 		fmt.Sprintf(openWeatherMapURLFmt, city, countryCode, c.ApiKey),
 	)
 	if err != nil {
 		return nil, err
 	}
-	data := &domain.OpenWeatherResp{}
+	data := &OpenWeatherResp{}
 	err = json.NewDecoder(resp.Body).Decode(data)
 	if err != nil {
 		return nil, err
 	}
 
-	return data, nil
+	return toWeather(data), nil
 }
 
-func (c *OpenWeatherMapClient) GetForecast(lat, lon float64) (*domain.Forecast, error) {
+func (c *openWeatherMapClient) GetForecast(lat, lon float64, day int64) (*domain.Forecast, error) {
 	resp, err := http.Get(
 		fmt.Sprintf(openWeatherForecastURLFmt, lat, lon, c.ApiKey),
 	)
 	if err != nil {
 		return nil, err
 	}
-	dataForecast := &domain.Forecast{}
+	dataForecast := &ForecastResp{}
 	err = json.NewDecoder(resp.Body).Decode(dataForecast)
 	if err != nil {
 		return nil, err
 	}
-	return dataForecast, nil
+
+	return toForecast(dataForecast, day)
+}
+
+func toWeather(weather *OpenWeatherResp) *domain.WeatherWithForecast {
+	sunriseTime := time.Unix(int64(weather.Sys.Sunrise), 0)
+	sunsetTime := time.Unix(int64(weather.Sys.Sunset), 0)
+	var weatherModel = &domain.WeatherWithForecast{
+		LocationName:   fmt.Sprintf("%s, %s", weather.Name, weather.Sys.Country),
+		Temperature:    fmt.Sprintf("%v °C", weather.Main.Temp),
+		Wind:           fmt.Sprintf("%s, %v m/s, %s", getWindTypeBySpeed(weather.Wind.Speed), weather.Wind.Speed, getWindDirectionByDegree(weather.Wind.Deg)),
+		Cloudiness:     weather.GetCloudsDescription(),
+		Pressure:       fmt.Sprintf("%d hpa", weather.Main.Pressure),
+		Humidity:       fmt.Sprintf(`%d %%`, weather.Main.Humidity),
+		Sunrise:        sunriseTime.Format("15:04"),
+		Sunset:         sunsetTime.Format("15:04"),
+		GeoCoordinates: fmt.Sprintf("[%v, %v]", weather.Coord.Lat, weather.Coord.Lon),
+		RequestedTime:  time.Now().Format("2006-02-01 15:04:05"),
+		Lat:            weather.Coord.Lat,
+		Lon:            weather.Coord.Lon,
+	}
+	return weatherModel
+}
+
+func toForecast(forecast *ForecastResp, day int64) (*domain.Forecast, error) {
+	if len(forecast.Daily)-1 < int(day) {
+		return nil, fmt.Errorf("cannot get forecast for day %d", day)
+	}
+
+	dayFC := forecast.Daily[day]
+	resp := &domain.Forecast{
+		Temperature: fmt.Sprintf("%v °C", dayFC.Temp.Day),
+		Wind:        fmt.Sprintf("%s, %v m/s, %s", getWindTypeBySpeed(dayFC.WindSpeed), dayFC.WindSpeed, getWindDirectionByDegree(dayFC.WindDeg)),
+		Pressure:    fmt.Sprintf("%d hpa", dayFC.Pressure),
+		Humidity:    fmt.Sprintf("%d %%", dayFC.Humidity),
+		Sunrise:     time.Unix(int64(dayFC.Sunrise), 0).Format("15:04"),
+		Sunset:      time.Unix(int64(dayFC.Sunset), 0).Format("15:04"),
+		Date:        time.Unix(int64(dayFC.Sunrise), 0).Format("2006-02-01 15:04:05"),
+	}
+	return resp, nil
+}
+
+func getWindDirectionByDegree(degree float64) string {
+	if degree < 11.25 {
+		return "north"
+	}
+	if degree < 33.75 {
+		return "north-northeast"
+	}
+	if degree < 56.25 {
+		return "northeast"
+	}
+	if degree < 78.75 {
+		return "east-northeast"
+	}
+	if degree < 101.25 {
+		return "east"
+	}
+	if degree < 123.75 {
+		return "east-southeast"
+	}
+	if degree < 146.25 {
+		return "southeast"
+	}
+	if degree < 168.75 {
+		return "south-southeast"
+	}
+	if degree < 191.25 {
+		return "south"
+	}
+	if degree < 213.75 {
+		return "south-southwest"
+	}
+	if degree < 236.25 {
+		return "southwest"
+	}
+	if degree < 258.75 {
+		return "west-southwest"
+	}
+	if degree < 281.25 {
+		return "west"
+	}
+	if degree < 303.75 {
+		return "west-northwest"
+	}
+	if degree < 326.25 {
+		return "northwest"
+	}
+	if degree < 348.25 {
+		return "north-northwest"
+	}
+	return "north"
+}
+
+// m/s
+func getWindTypeBySpeed(speed float64) string {
+	if speed < 0.5 {
+		return "Calm"
+	}
+	if speed < 1.5 {
+		return "Light air"
+	}
+	if speed < 3 {
+		return "Light breeze"
+	}
+	if speed < 5 {
+		return "Gentle breeze"
+	}
+	if speed < 8 {
+		return "Moderate breeze"
+	}
+	if speed < 10.5 {
+		return "Fresh breeze"
+	}
+	if speed < 13.5 {
+		return "Strong breeze"
+	}
+	if speed < 16.5 {
+		return "Moderate gale"
+	}
+	if speed < 20 {
+		return "Fresh gale"
+	}
+	if speed < 23.5 {
+		return "Strong gale"
+	}
+	if speed < 27.5 {
+		return "Whole gale"
+	}
+	if speed < 31.5 {
+		return "Storm"
+	}
+	return "Hurricane"
 }

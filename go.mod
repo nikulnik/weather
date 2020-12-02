@@ -13,5 +13,7 @@ require (
 	github.com/go-openapi/validate v0.19.15
 	github.com/gorilla/mux v1.8.0
 	github.com/jessevdk/go-flags v1.4.0
+	github.com/stretchr/testify v1.6.1
+	github.com/vektra/mockery/v2 v2.3.0 // indirect
 	golang.org/x/net v0.0.0-20201201195509-5d6afe98e0b7
 )
