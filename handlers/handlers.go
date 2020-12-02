@@ -1,23 +1,19 @@
 package handlers
 
 import (
-	"encoding/json"
-	"net/http"
-
-	"github.com/gorilla/mux"
 	"github.com/nikulnik/weather/interactors"
+	"github.com/nikulnik/weather/models"
+	"github.com/nikulnik/weather/restapi/operations/weather"
+
+	"github.com/go-openapi/runtime/middleware"
 )
 
 var (
 	internalErr = `internal error`
 )
 
-type DefaultErrorResponse struct {
-	Error string `json:"Error"`
-}
-
 type WeatherHandler interface {
-	GetWeather(w http.ResponseWriter, r *http.Request)
+	GetWeather(params weather.GetWeatherParams) middleware.Responder
 }
 
 func NewWeatherHandler(weatherIntercator interactors.WeatherInteractor) WeatherHandler {
@@ -28,20 +24,11 @@ type weatherHandler struct {
 	weatherInteractor interactors.WeatherInteractor
 }
 
-func (h *weatherHandler) GetWeather(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	vars := mux.Vars(r)
-	weatherData, err := h.weatherInteractor.GetWeather(vars["city"], vars["country"])
+func (h *weatherHandler) GetWeather(params weather.GetWeatherParams) middleware.Responder {
+	weatherData, err := h.weatherInteractor.GetWeather(params.City, params.Country, params.ForecastDay)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		w.Write(newErrorResponse(err.Error()))
-		return
+		return weather.NewGetWeatherDefault(500).WithPayload(&models.Error{Error: err.Error()})
 	}
-	resp, err := json.Marshal(weatherData)
-	w.Write(resp)
-}
 
-func newErrorResponse(text string) []byte {
-	payload, _ := json.Marshal(&DefaultErrorResponse{Error: text})
-	return payload
+	return weather.NewGetWeatherOK().WithPayload(weatherData)
 }

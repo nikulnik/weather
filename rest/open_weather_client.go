@@ -8,7 +8,8 @@ import (
 	"github.com/nikulnik/weather/domain"
 )
 
-const openWeatherMapURLFmt = "http://api.openweathermap.org/data/2.5/weather?q=%s,%s&appid=%s"
+const openWeatherMapURLFmt = "http://api.openweathermap.org/data/2.5/weather?q=%s,%s&units=metric&appid=%s"
+const openWeatherForecastURLFmt = "http://api.openweathermap.org/data/2.5/onecall?lat=%v&lon=%v&exclude=current,minutely,hourly,alerts&units=metric&appid=%s"
 
 type OpenWeatherMapClient struct {
 	ApiKey     string
@@ -23,7 +24,7 @@ func NewOpenWeatherMapClient(apiKey string) OpenWeatherMapClient {
 	return client
 }
 
-func (c *OpenWeatherMapClient) GetSomething(city, countryCode string) (*domain.OpenWeatherResp, error) {
+func (c *OpenWeatherMapClient) GetWeather(city, countryCode string) (*domain.OpenWeatherResp, error) {
 	resp, err := http.Get(
 		fmt.Sprintf(openWeatherMapURLFmt, city, countryCode, c.ApiKey),
 	)
@@ -35,5 +36,21 @@ func (c *OpenWeatherMapClient) GetSomething(city, countryCode string) (*domain.O
 	if err != nil {
 		return nil, err
 	}
+
 	return data, nil
+}
+
+func (c *OpenWeatherMapClient) GetForecast(lat, lon float64) (*domain.Forecast, error) {
+	resp, err := http.Get(
+		fmt.Sprintf(openWeatherForecastURLFmt, lat, lon, c.ApiKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	dataForecast := &domain.Forecast{}
+	err = json.NewDecoder(resp.Body).Decode(dataForecast)
+	if err != nil {
+		return nil, err
+	}
+	return dataForecast, nil
 }

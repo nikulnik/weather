@@ -15,9 +15,19 @@ type OpenWeatherResp struct {
 	Name       string    `json:"name"`
 	Cod        int       `json:"cod"`
 }
+
+func (c OpenWeatherResp) GetCloudsDescription() string {
+	for _, w := range c.Weather {
+		if w.Main == "Clouds" {
+			return w.Description
+		}
+	}
+	return ""
+}
+
 type Coord struct {
-	Lon int `json:"lon"`
-	Lat int `json:"lat"`
+	Lon float64 `json:"lon"`
+	Lat float64 `json:"lat"`
 }
 type Weather struct {
 	ID          int    `json:"id"`
@@ -34,8 +44,8 @@ type Main struct {
 	Humidity  int     `json:"humidity"`
 }
 type Wind struct {
-	Speed int `json:"speed"`
-	Deg   int `json:"deg"`
+	Speed float64 `json:"speed"`
+	Deg   float64 `json:"deg"`
 }
 type Clouds struct {
 	All int `json:"all"`

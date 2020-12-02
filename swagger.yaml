@@ -1,0 +1,100 @@
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "Weather API"
+host: "localhost"
+basePath: "/"
+schemes:
+  - "http"
+paths:
+  /weather:
+    get:
+      summary: Get the current weather or the forecast
+      tags:
+        - weather
+      operationId: getWeather
+      produces:
+        - application/json
+      parameters:
+        - name: city
+          required: true
+          in: query
+          description: The city to get weather for
+          type: string
+          x-nullable: false
+        - name: country
+          required: true
+          in: query
+          description: The country code
+          type: string
+          minLength: 2
+          maxLength: 2
+          x-nullable: false
+        - name: forecast_day
+          required: false
+          in: query
+          description: Specifies the day of the forecast (0 - today)
+          type: integer
+          minimum: 0
+          maximum: 6
+          x-nullable: false
+      responses:
+        '200':
+          description: Success
+          schema:
+            $ref: '#/definitions/WeatherWithForecast'
+        default:
+          description: Unexpected error
+          schema:
+            $ref: '#/definitions/Error'
+definitions:
+  Error:
+    type: object
+    required:
+      - error
+    properties:
+      error:
+        type: string
+        x-nullable: false
+  WeatherWithForecast:
+    type: object
+    properties:
+      location_name:
+        type: string
+      temperature:
+        type: string
+      wind:
+        type: string
+      cloudiness:
+        type: string
+      pressure:
+        type: string
+      humidity:
+        type: string
+      sunrise:
+        type: string
+      sunset:
+        type: string
+      geo_coordinates:
+        type: string
+      requested_time:
+        type: string
+      forecast:
+        $ref: '#/definitions/Forecast'
+  Forecast:
+    type: object
+    properties:
+      temperature:
+        type: string
+      wind:
+        type: string
+      pressure:
+        type: string
+      humidity:
+        type: string
+      sunrise:
+        type: string
+      sunset:
+        type: string
+      date:
+        type: string
