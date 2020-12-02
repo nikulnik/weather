@@ -42,7 +42,7 @@ func (wi *weatherInteractor) GetWeather(city, country string, forecastDay *int64
 	// If offset day for forecast is provided
 	if forecastDay != nil {
 		// Get forecast from the cache
-		forecast := wi.cache.GetForecast(weather.Lat, weather.Lon) // TODO change
+		forecast := wi.cache.GetForecast(weather.Lat, weather.Lon)
 		if forecast != nil {
 			weather.Forecast = forecast
 			return weather, nil

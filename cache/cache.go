@@ -31,7 +31,7 @@ func NewCache(ttl time.Duration) Cache {
 	}
 }
 
-func (c cache) SetWeather(city, country string, value *domain.WeatherWithForecast) {
+func (c *cache) SetWeather(city, country string, value *domain.WeatherWithForecast) {
 	key := city + "*" + country
 	c.mux.Lock()
 	c.dataWeather[key] = value
@@ -43,7 +43,7 @@ func (c cache) SetWeather(city, country string, value *domain.WeatherWithForecas
 	})
 }
 
-func (c cache) SetForecast(lat, lon float64, value *domain.Forecast) {
+func (c *cache) SetForecast(lat, lon float64, value *domain.Forecast) {
 	key := c.createForecastKey(lat, lon)
 	c.mux.Lock()
 	c.dataForecast[key] = value
@@ -55,18 +55,18 @@ func (c cache) SetForecast(lat, lon float64, value *domain.Forecast) {
 	})
 }
 
-func (c cache) GetWeather(city, country string) *domain.WeatherWithForecast {
+func (c *cache) GetWeather(city, country string) *domain.WeatherWithForecast {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	return c.dataWeather[city+"*"+country]
 }
 
-func (c cache) GetForecast(lat, lon float64) *domain.Forecast {
+func (c *cache) GetForecast(lat, lon float64) *domain.Forecast {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	return c.dataForecast[c.createForecastKey(lat, lon)]
 }
 
-func (c cache) createForecastKey(lat, lon float64) string {
+func (c *cache) createForecastKey(lat, lon float64) string {
 	return fmt.Sprintf("%v*%v", lat, lon)
 }
