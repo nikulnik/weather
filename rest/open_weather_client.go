@@ -4,15 +4,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/nikulnik/weather/domain"
+	"io/ioutil"
 	"net/http"
 	"time"
 )
 
-const openWeatherMapURLFmt = "http://api.openweathermap.org/data/2.5/weather?q=%s,%s&units=metric&appid=%s"
-const openWeatherForecastURLFmt = "http://api.openweathermap.org/data/2.5/onecall?lat=%v&lon=%v&exclude=current,minutely,hourly,alerts&units=metric&appid=%s"
+const (
+	openWeatherCurrentWeatherURLFmt = "http://api.openweathermap.org/data/2.5/weather?q=%s,%s&units=metric&mode=xml&appid=%s"
+	openWeatherForecastURLFmt       = "http://api.openweathermap.org/data/2.5/onecall?lat=%v&lon=%v&exclude=current,minutely,hourly,alerts&units=metric&appid=%s"
+
+	openWeatherErrRespFmt = "openweathermap API responded with error: %s"
+	)
 
 type OpenWeatherMapClient interface {
-	GetWeather(city, countryCode string) (*domain.WeatherWithForecast, error)
+	GetWeather(city, countryCode string) (*domain.CurrentWeather, error)
 	GetForecast(lat, lon float64, day int64) (*domain.Forecast, error)
 }
 
@@ -29,20 +34,33 @@ func NewOpenWeatherMapClient(apiKey string) OpenWeatherMapClient {
 	return client
 }
 
-func (c *openWeatherMapClient) GetWeather(city, countryCode string) (*domain.WeatherWithForecast, error) {
+func (c *openWeatherMapClient) GetWeather(city, countryCode string) (*domain.CurrentWeather, error) {
 	resp, err := http.Get(
-		fmt.Sprintf(openWeatherMapURLFmt, city, countryCode, c.ApiKey),
+		fmt.Sprintf(openWeatherCurrentWeatherURLFmt, city, countryCode, c.ApiKey),
 	)
 	if err != nil {
 		return nil, err
 	}
 	data := &OpenWeatherResp{}
-	err = json.NewDecoder(resp.Body).Decode(data)
+	if resp.StatusCode == 200 {
+		decoder := json.NewDecoder(ioutil.NopCloser(resp.Body))
+		decoder.DisallowUnknownFields()
+		err = decoder.Decode(data)
+		if err != nil {
+			return nil, err
+		}
+		return toWeatherDomain(data), nil
+	}
+
+	errResp := &OpenWeatherErrorResp{}
+	decoder := json.NewDecoder(resp.Body)
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(errResp)
 	if err != nil {
 		return nil, err
 	}
 
-	return toWeather(data), nil
+	return nil, fmt.Errorf(openWeatherErrRespFmt, errResp.Message)
 }
 
 func (c *openWeatherMapClient) GetForecast(lat, lon float64, day int64) (*domain.Forecast, error) {
@@ -52,53 +70,85 @@ func (c *openWeatherMapClient) GetForecast(lat, lon float64, day int64) (*domain
 	if err != nil {
 		return nil, err
 	}
-	dataForecast := &ForecastResp{}
-	err = json.NewDecoder(resp.Body).Decode(dataForecast)
+
+	data := &ForecastResp{}
+	if resp.StatusCode == 200 {
+		decoder := json.NewDecoder(ioutil.NopCloser(resp.Body))
+		decoder.DisallowUnknownFields()
+		err = decoder.Decode(data)
+		if err != nil {
+			return nil, err
+		}
+		return toForecastDomain(data, day)
+	}
+
+	errResp := &OpenWeatherErrorResp{}
+	decoder := json.NewDecoder(resp.Body)
+	decoder.DisallowUnknownFields()
+	err = decoder.Decode(errResp)
 	if err != nil {
 		return nil, err
 	}
 
-	return toForecast(dataForecast, day)
+	return nil, fmt.Errorf(openWeatherErrRespFmt, errResp.Message)
 }
 
-func toWeather(weather *OpenWeatherResp) *domain.WeatherWithForecast {
-	sunriseTime := time.Unix(int64(weather.Sys.Sunrise), 0)
-	sunsetTime := time.Unix(int64(weather.Sys.Sunset), 0)
-	var weatherModel = &domain.WeatherWithForecast{
-		LocationName:   fmt.Sprintf("%s, %s", weather.Name, weather.Sys.Country),
-		Temperature:    fmt.Sprintf("%v °C", weather.Main.Temp),
-		Wind:           fmt.Sprintf("%s, %v m/s, %s", getWindTypeBySpeed(weather.Wind.Speed), weather.Wind.Speed, getWindDirectionByDegree(weather.Wind.Deg)),
-		Cloudiness:     weather.GetCloudsDescription(),
-		Pressure:       fmt.Sprintf("%d hpa", weather.Main.Pressure),
-		Humidity:       fmt.Sprintf(`%d %%`, weather.Main.Humidity),
-		Sunrise:        sunriseTime.Format("15:04"),
-		Sunset:         sunsetTime.Format("15:04"),
-		GeoCoordinates: fmt.Sprintf("[%v, %v]", weather.Coord.Lat, weather.Coord.Lon),
-		RequestedTime:  time.Now().Format("2006-02-01 15:04:05"),
-		Lat:            weather.Coord.Lat,
-		Lon:            weather.Coord.Lon,
+func toWeatherDomain(weather *OpenWeatherResp) *domain.CurrentWeather {
+	var weatherModel = &domain.CurrentWeather{
+		Temperature:   weather.Main.Temp,
+		WindSpeed:     weather.Wind.Speed,
+		WindDegree:    weather.Wind.Deg,
+		Cloudiness:    weather.GetCloudsDescription(),
+		Pressure:      weather.Main.Pressure,
+		Humidity:      weather.Main.Humidity,
+		Sunrise:       weather.Sys.Sunrise,
+		Sunset:        weather.Sys.Sunset,
+		RequestedTime: time.Now(),
+		Lat:           weather.Coord.Lat,
+		Lon:           weather.Coord.Lon,
+		City:          weather.Name,
+		Country:       weather.Sys.Country,
 	}
 	return weatherModel
 }
 
-func toForecast(forecast *ForecastResp, day int64) (*domain.Forecast, error) {
+func toForecastDomain(forecast *ForecastResp, day int64) (*domain.Forecast, error) {
 	if len(forecast.Daily)-1 < int(day) {
 		return nil, fmt.Errorf("cannot get forecast for day %d", day)
 	}
 
 	dayFC := forecast.Daily[day]
 	resp := &domain.Forecast{
-		Temperature: fmt.Sprintf("%v °C", dayFC.Temp.Day),
-		Wind:        fmt.Sprintf("%s, %v m/s, %s", getWindTypeBySpeed(dayFC.WindSpeed), dayFC.WindSpeed, getWindDirectionByDegree(dayFC.WindDeg)),
-		Pressure:    fmt.Sprintf("%d hpa", dayFC.Pressure),
-		Humidity:    fmt.Sprintf("%d %%", dayFC.Humidity),
-		Sunrise:     time.Unix(int64(dayFC.Sunrise), 0).Format("15:04"),
-		Sunset:      time.Unix(int64(dayFC.Sunset), 0).Format("15:04"),
-		Date:        time.Unix(int64(dayFC.Sunrise), 0).Format("2006-02-01 15:04:05"),
+		Temperature: dayFC.Temp.Day,
+		WindDegree:  dayFC.WindDeg,
+		WindSpeed:   dayFC.WindSpeed,
+		Pressure:    dayFC.Pressure,
+		Humidity:    dayFC.Humidity,
+		Sunrise:     dayFC.Sunrise,
+		Sunset:      dayFC.Sunset,
+		DateTime:    dayFC.Dt,
 	}
 	return resp, nil
 }
 
+func formatTemp(temp float64) string {
+	return fmt.Sprintf("%v °C", temp)
+}
+
+func formatWind(speed, degree float64) string {
+	return fmt.Sprintf("%s, %v m/s, %s", getWindTypeBySpeed(speed), speed, getWindDirectionByDegree(degree))
+}
+
+func formatPressure(pressure int) string {
+	return fmt.Sprintf("%d hpa", pressure)
+}
+func formatHumidity(humidity int) string {
+	return fmt.Sprintf(`%d %%`, humidity)
+}
+
+func formatSunriseOrSunset(v int) string {
+	return time.Unix(int64(v), 0).Format("15:04")
+}
 func getWindDirectionByDegree(degree float64) string {
 	if degree < 11.25 {
 		return "north"

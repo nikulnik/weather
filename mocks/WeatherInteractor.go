@@ -14,24 +14,33 @@ type WeatherInteractor struct {
 }
 
 // GetWeather provides a mock function with given fields: city, country, forecastDay
-func (_m *WeatherInteractor) GetWeather(city string, country string, forecastDay *int64) (*domain.WeatherWithForecast, error) {
+func (_m *WeatherInteractor) GetWeather(city string, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error) {
 	ret := _m.Called(city, country, forecastDay)
 
-	var r0 *domain.WeatherWithForecast
-	if rf, ok := ret.Get(0).(func(string, string, *int64) *domain.WeatherWithForecast); ok {
+	var r0 *domain.CurrentWeather
+	if rf, ok := ret.Get(0).(func(string, string, *int64) *domain.CurrentWeather); ok {
 		r0 = rf(city, country, forecastDay)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.WeatherWithForecast)
+			r0 = ret.Get(0).(*domain.CurrentWeather)
 		}
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string, *int64) error); ok {
+	var r1 *domain.Forecast
+	if rf, ok := ret.Get(1).(func(string, string, *int64) *domain.Forecast); ok {
 		r1 = rf(city, country, forecastDay)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*domain.Forecast)
+		}
 	}
 
-	return r0, r1
+	var r2 error
+	if rf, ok := ret.Get(2).(func(string, string, *int64) error); ok {
+		r2 = rf(city, country, forecastDay)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
 }

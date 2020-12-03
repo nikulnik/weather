@@ -8,15 +8,15 @@ import (
 )
 
 type Cache interface {
-	SetWeather(city, country string, value *domain.WeatherWithForecast)
+	SetWeather(city, country string, value *domain.CurrentWeather)
 	SetForecast(lat, lon float64, value *domain.Forecast)
 
-	GetWeather(city, country string) *domain.WeatherWithForecast
+	GetWeather(city, country string) *domain.CurrentWeather
 	GetForecast(lat, lon float64) *domain.Forecast
 }
 
 type cache struct {
-	dataWeather  map[string]*domain.WeatherWithForecast
+	dataWeather  map[string]*domain.CurrentWeather
 	dataForecast map[string]*domain.Forecast
 	mux          *sync.Mutex
 	ttl          time.Duration
@@ -24,14 +24,14 @@ type cache struct {
 
 func NewCache(ttl time.Duration) Cache {
 	return &cache{
-		dataWeather:  make(map[string]*domain.WeatherWithForecast),
+		dataWeather:  make(map[string]*domain.CurrentWeather),
 		dataForecast: make(map[string]*domain.Forecast),
 		mux:          &sync.Mutex{},
 		ttl:          ttl,
 	}
 }
 
-func (c *cache) SetWeather(city, country string, value *domain.WeatherWithForecast) {
+func (c *cache) SetWeather(city, country string, value *domain.CurrentWeather) {
 	key := city + "*" + country
 	c.mux.Lock()
 	c.dataWeather[key] = value
@@ -55,7 +55,7 @@ func (c *cache) SetForecast(lat, lon float64, value *domain.Forecast) {
 	})
 }
 
-func (c *cache) GetWeather(city, country string) *domain.WeatherWithForecast {
+func (c *cache) GetWeather(city, country string) *domain.CurrentWeather {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	return c.dataWeather[city+"*"+country]

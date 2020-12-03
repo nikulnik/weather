@@ -36,15 +36,15 @@ func (_m *OpenWeatherMapClient) GetForecast(lat float64, lon float64, day int64)
 }
 
 // GetWeather provides a mock function with given fields: city, countryCode
-func (_m *OpenWeatherMapClient) GetWeather(city string, countryCode string) (*domain.WeatherWithForecast, error) {
+func (_m *OpenWeatherMapClient) GetWeather(city string, countryCode string) (*domain.CurrentWeather, error) {
 	ret := _m.Called(city, countryCode)
 
-	var r0 *domain.WeatherWithForecast
-	if rf, ok := ret.Get(0).(func(string, string) *domain.WeatherWithForecast); ok {
+	var r0 *domain.CurrentWeather
+	if rf, ok := ret.Get(0).(func(string, string) *domain.CurrentWeather); ok {
 		r0 = rf(city, countryCode)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.WeatherWithForecast)
+			r0 = ret.Get(0).(*domain.CurrentWeather)
 		}
 	}
 

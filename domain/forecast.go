@@ -1,11 +1,12 @@
 package domain
 
 type Forecast struct {
-	Date string
-	Humidity string
-	Pressure string
-	Sunrise string
-	Sunset string
-	Temperature string
-	Wind string
+	DateTime    int
+	Humidity    int
+	Pressure    int
+	Sunrise     int
+	Sunset      int
+	Temperature float64
+	WindSpeed   float64
+	WindDegree  float64
 }

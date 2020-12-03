@@ -1,17 +1,19 @@
 package domain
 
-type WeatherWithForecast struct {
-	Cloudiness string
-	Forecast *Forecast
-	GeoCoordinates string
-	Humidity string
-	LocationName string
-	Pressure string
-	RequestedTime string
-	Sunrise string
-	Sunset string
-	Temperature string
-	Wind string
-	Lat float64
-	Lon float64
+import "time"
+
+type CurrentWeather struct {
+	Country       string
+	City          string
+	Cloudiness    string
+	Humidity      int
+	Pressure      int
+	RequestedTime time.Time
+	Sunrise       int
+	Sunset        int
+	Temperature   float64
+	WindSpeed     float64
+	WindDegree    float64
+	Lat           float64
+	Lon           float64
 }

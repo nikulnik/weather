@@ -29,15 +29,15 @@ func (_m *Cache) GetForecast(lat float64, lon float64) *domain.Forecast {
 }
 
 // GetWeather provides a mock function with given fields: city, country
-func (_m *Cache) GetWeather(city string, country string) *domain.WeatherWithForecast {
+func (_m *Cache) GetWeather(city string, country string) *domain.CurrentWeather {
 	ret := _m.Called(city, country)
 
-	var r0 *domain.WeatherWithForecast
-	if rf, ok := ret.Get(0).(func(string, string) *domain.WeatherWithForecast); ok {
+	var r0 *domain.CurrentWeather
+	if rf, ok := ret.Get(0).(func(string, string) *domain.CurrentWeather); ok {
 		r0 = rf(city, country)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.WeatherWithForecast)
+			r0 = ret.Get(0).(*domain.CurrentWeather)
 		}
 	}
 
@@ -50,6 +50,6 @@ func (_m *Cache) SetForecast(lat float64, lon float64, value *domain.Forecast) {
 }
 
 // SetWeather provides a mock function with given fields: city, country, value
-func (_m *Cache) SetWeather(city string, country string, value *domain.WeatherWithForecast) {
+func (_m *Cache) SetWeather(city string, country string, value *domain.CurrentWeather) {
 	_m.Called(city, country, value)
 }

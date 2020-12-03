@@ -7,7 +7,7 @@ import (
 )
 
 type WeatherInteractor interface {
-	GetWeather(city, country string, forecastDay *int64) (*domain.WeatherWithForecast, error)
+	GetWeather(city, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error)
 }
 
 type weatherInteractor struct {
@@ -22,8 +22,8 @@ func NewWeatherInteractor(client rest.OpenWeatherMapClient, cache cache.Cache) W
 	}
 }
 
-func (wi *weatherInteractor) GetWeather(city, country string, forecastDay *int64) (*domain.WeatherWithForecast, error) {
-	var weather *domain.WeatherWithForecast
+func (wi *weatherInteractor) GetWeather(city, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error) {
+	var weather *domain.CurrentWeather
 	var err error
 
 	// Attempt to get weather with forecast from cache
@@ -32,7 +32,7 @@ func (wi *weatherInteractor) GetWeather(city, country string, forecastDay *int64
 		// Request weather
 		weather, err = wi.openWeatherMapClient.GetWeather(city, country)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		// Store weather object in the cache
@@ -44,21 +44,19 @@ func (wi *weatherInteractor) GetWeather(city, country string, forecastDay *int64
 		// Get forecast from the cache
 		forecast := wi.cache.GetForecast(weather.Lat, weather.Lon)
 		if forecast != nil {
-			weather.Forecast = forecast
-			return weather, nil
+			return weather, forecast, nil
 		}
 
 		// Request forecast
 		forecast, err := wi.openWeatherMapClient.GetForecast(weather.Lat, weather.Lon, *forecastDay)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		weather.Forecast = forecast
 
 		// Put the forecast to the cache
 		wi.cache.SetForecast(weather.Lat, weather.Lon, forecast)
-		return weather, nil
+		return weather, forecast, nil
 	}
 
-	return weather, nil
+	return weather, nil, nil
 }
