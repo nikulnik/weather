@@ -27,8 +27,8 @@ func (wi *weatherInteractor) GetCurrentWeather(city, country string, forecastDay
 	var err error
 
 	// Attempt to get weather with forecast from cache
-	weather = wi.cache.GetCurrentWeather(city, country)
-	if weather == nil {
+	weatherInt := wi.cache.Get(city + "*" + country)
+	if weatherInt == nil {
 		// Request weather
 		weather, err = wi.openWeatherMapClient.GetCurrentWeather(city, country)
 		if err != nil {
@@ -36,25 +36,27 @@ func (wi *weatherInteractor) GetCurrentWeather(city, country string, forecastDay
 		}
 
 		// Store weather object in the cache
-		wi.cache.SetWeather(city, country, weather)
+		wi.cache.Set(city + "*" + country, weather)
 	}
-
-	// If day for forecast is provided
+	if weatherInt != nil {
+		weather = weatherInt.(*domain.CurrentWeather)
+	}
+	// If day to get the forecast is provided
 	if forecastDay != nil {
 		// Get forecast from the cache
-		forecast := wi.cache.GetForecast(weather.Lat, weather.Lon)
-		if forecast != nil {
-			return weather, forecast, nil
+		forecastInt := wi.cache.Get(weather.Lat + "*" + weather.Lon)
+		if forecastInt != nil {
+			return weather, forecastInt.(*domain.Forecast), nil
 		}
 
-		// Request forecast
+		// Request the forecast
 		forecast, err := wi.openWeatherMapClient.GetForecast(weather.Lat, weather.Lon, *forecastDay)
 		if err != nil {
 			return nil, nil, err
 		}
 
 		// Put the forecast to the cache
-		wi.cache.SetForecast(weather.Lat, weather.Lon, forecast)
+		wi.cache.Set(weather.Lat + "*" + weather.Lon, forecast)
 		return weather, forecast, nil
 	}
 

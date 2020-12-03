@@ -2,5 +2,5 @@
 
 cmd
 models
-restapi
+restapi/*
 !restapi/configure_*.go

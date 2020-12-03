@@ -1,72 +1,55 @@
 package cache
 
 import (
-	"fmt"
-	"github.com/nikulnik/weather/domain"
 	"sync"
 	"time"
 )
 
 type Cache interface {
-	SetWeather(city, country string, value *domain.CurrentWeather)
-	SetForecast(lat, lon string, value *domain.Forecast)
-
-	GetCurrentWeather(city, country string) *domain.CurrentWeather
-	GetForecast(lat string, lon string) *domain.Forecast
+	Set(key string, value interface{})
+	Get(key string) interface{}
 }
 
 type cache struct {
-	dataWeather  map[string]*domain.CurrentWeather
-	dataForecast map[string]*domain.Forecast
+	data  map[string]value
 	mux          *sync.Mutex
 	ttl          time.Duration
 }
 
+type value struct {
+	timer *time.Timer
+	data  interface{}
+}
+
 func NewCache(ttl time.Duration) Cache {
 	return &cache{
-		dataWeather:  make(map[string]*domain.CurrentWeather),
-		dataForecast: make(map[string]*domain.Forecast),
+		data:  		make(map[string]value),
 		mux:          &sync.Mutex{},
 		ttl:          ttl,
 	}
 }
 
-func (c *cache) SetWeather(city, country string, value *domain.CurrentWeather) {
-	key := city + "*" + country
+func (c *cache) Set(key string, val interface{}) {
 	c.mux.Lock()
-	c.dataWeather[key] = value
+	timer := time.NewTimer(c.ttl)
+	c.data[key] = value{
+		data:  val,
+		timer: timer,
+	}
 	c.mux.Unlock()
-	time.AfterFunc(c.ttl, func() {
+	go func() {
+		<-timer.C
 		c.mux.Lock()
-		delete(c.dataWeather, key)
+		delete(c.data, key)
 		c.mux.Unlock()
-	})
+	}()
 }
 
-func (c *cache) SetForecast(lat, lon string, value *domain.Forecast) {
-	key := c.createForecastKey(lat, lon)
-	c.mux.Lock()
-	c.dataForecast[key] = value
-	c.mux.Unlock()
-	time.AfterFunc(c.ttl, func() {
-		c.mux.Lock()
-		delete(c.dataForecast, key)
-		c.mux.Unlock()
-	})
-}
-
-func (c *cache) GetCurrentWeather(city, country string) *domain.CurrentWeather {
+func (c *cache) Get(key string) interface{} {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	return c.dataWeather[city+"*"+country]
-}
-
-func (c *cache) GetForecast(lat string, lon string) *domain.Forecast {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	return c.dataForecast[c.createForecastKey(lat, lon)]
-}
-
-func (c *cache) createForecastKey(lat, lon string) string {
-	return fmt.Sprintf("%s*%s", lat, lon)
+	if _, ok := c.data[key]; ok {
+		c.data[key].timer.Reset(c.ttl)
+	}
+	return c.data[key].data
 }

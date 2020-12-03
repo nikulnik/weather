@@ -1,10 +1,10 @@
 package cache
 
 import (
+	"github.com/nikulnik/weather/domain"
 	"testing"
 	"time"
 
-	"github.com/nikulnik/weather/domain"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,47 +14,30 @@ func TestNewCache_ReturnsCache(t *testing.T) {
 	assert.NotNil(t, cache)
 }
 
-func TestSetAndGetWeather_GetsCorrectWeather(t *testing.T) {
+func TestSetAndGet_GetsCorrectValue(t *testing.T) {
 	t.Parallel()
-	var city, country = "city", "country"
 	cache := NewCache(time.Minute)
-	value := &domain.CurrentWeather{Sunset: time.Now()}
-	cache.SetWeather(city, country, value)
-	assert.Equal(t, value, cache.GetCurrentWeather(city, country))
+	cache.Set("key", "val")
+	assert.Equal(t, "val", cache.Get("key"))
 }
 
-func TestSetAndGetForecast_ReturnsCorrectForecast(t *testing.T) {
+func TestGet_ReturnsNilAfterTimeout(t *testing.T) {
 	t.Parallel()
-	var lat, lon = "1", "1"
-	cache := NewCache(time.Minute)
-	value := &domain.Forecast{Sunset: 41241}
-	cache.SetForecast(lat, lon, value)
-	assert.Equal(t, value, cache.GetForecast(lat, lon))
-}
-
-func TestGetForecast_ReturnsNilAfterTimeout(t *testing.T) {
-	t.Parallel()
-	var lat, lon = "1", "1"
 	cache := NewCache(time.Millisecond * 3)
 	value := &domain.Forecast{Sunset: 41241}
-	cache.SetForecast(lat, lon, value)
+	cache.Set("key", value)
 	time.Sleep(time.Millisecond * 6)
-	assert.Nil(t, cache.GetForecast(lat, lon))
+	assert.Nil(t, cache.Get("key"))
 }
 
-func TestGetWeather_ReturnsNilAfterTimeout(t *testing.T) {
+func TestGet_ResetsTimeout(t *testing.T) {
 	t.Parallel()
-	var city, country = "city", "country"
-	cache := NewCache(time.Millisecond * 3)
-	value := &domain.CurrentWeather{Sunset: time.Now()}
-	cache.SetWeather(city, country, value)
-	time.Sleep(time.Millisecond * 4)
-	assert.Nil(t, cache.GetCurrentWeather(city, country))
+	cache := NewCache(time.Millisecond * 10)
+	value := "val"
+	cache.Set("key", value)
+	time.Sleep(time.Millisecond * 5)
+	cache.Get("key")
+	time.Sleep(time.Millisecond*5)
+	assert.Equal(t, value, cache.Get("key"))
 }
 
-func TestCreateForecastKey_ReturnsCorrectKey(t *testing.T) {
-	t.Parallel()
-	var lat, lon = "1.123", "1.41424"
-	cache := cache{}
-	assert.Equal(t, "1.123*1.41424", cache.createForecastKey(lat, lon))
-}
