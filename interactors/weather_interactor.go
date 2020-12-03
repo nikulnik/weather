@@ -7,7 +7,7 @@ import (
 )
 
 type WeatherInteractor interface {
-	GetWeather(city, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error)
+	GetCurrentWeather(city, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error)
 }
 
 type weatherInteractor struct {
@@ -22,15 +22,15 @@ func NewWeatherInteractor(client rest.OpenWeatherMapClient, cache cache.Cache) W
 	}
 }
 
-func (wi *weatherInteractor) GetWeather(city, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error) {
+func (wi *weatherInteractor) GetCurrentWeather(city, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error) {
 	var weather *domain.CurrentWeather
 	var err error
 
 	// Attempt to get weather with forecast from cache
-	weather = wi.cache.GetWeather(city, country)
+	weather = wi.cache.GetCurrentWeather(city, country)
 	if weather == nil {
 		// Request weather
-		weather, err = wi.openWeatherMapClient.GetWeather(city, country)
+		weather, err = wi.openWeatherMapClient.GetCurrentWeather(city, country)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -39,7 +39,7 @@ func (wi *weatherInteractor) GetWeather(city, country string, forecastDay *int64
 		wi.cache.SetWeather(city, country, weather)
 	}
 
-	// If offset day for forecast is provided
+	// If day for forecast is provided
 	if forecastDay != nil {
 		// Get forecast from the cache
 		forecast := wi.cache.GetForecast(weather.Lat, weather.Lon)

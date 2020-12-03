@@ -13,8 +13,8 @@ type WeatherInteractor struct {
 	mock.Mock
 }
 
-// GetWeather provides a mock function with given fields: city, country, forecastDay
-func (_m *WeatherInteractor) GetWeather(city string, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error) {
+// GetCurrentWeather provides a mock function with given fields: city, country, forecastDay
+func (_m *WeatherInteractor) GetCurrentWeather(city string, country string, forecastDay *int64) (*domain.CurrentWeather, *domain.Forecast, error) {
 	ret := _m.Called(city, country, forecastDay)
 
 	var r0 *domain.CurrentWeather

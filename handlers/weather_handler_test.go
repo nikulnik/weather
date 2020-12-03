@@ -28,7 +28,7 @@ func TestGetWeather_WhenGetWeatherInteractorReturnsError_ReturnsDefaultResponder
 
 	expectedError := errors.New("some error")
 
-	interactorMock.On("GetWeather", params.City, params.Country, params.ForecastDay).Return(nil, nil, expectedError)
+	interactorMock.On("GetCurrentWeather", params.City, params.Country, params.ForecastDay).Return(nil, nil, expectedError)
 	r := handler.GetWeather(params)
 	resp, ok := r.(*weather.GetWeatherDefault)
 	assert.True(t, ok)
@@ -55,7 +55,7 @@ func TestGetWeather_HappyPathWithCurrWeatherAndForecast(t *testing.T) {
 		Pressure: 45,
 	}
 
-	interactorMock.On("GetWeather", params.City, params.Country, params.ForecastDay).Return(weatherData, forecastData, nil)
+	interactorMock.On("GetCurrentWeather", params.City, params.Country, params.ForecastDay).Return(weatherData, forecastData, nil)
 	r := handler.GetWeather(params)
 	resp, ok := r.(*weather.GetWeatherOK)
 	assert.True(t, ok)
@@ -81,7 +81,7 @@ func TestGetWeather_HappyPathWithCurrWeather(t *testing.T) {
 		},
 	}
 
-	interactorMock.On("GetWeather", params.City, params.Country, params.ForecastDay).Return(weatherData, nil, nil)
+	interactorMock.On("GetCurrentWeather", params.City, params.Country, params.ForecastDay).Return(weatherData, nil, nil)
 	r := handler.GetWeather(params)
 	resp, ok := r.(*weather.GetWeatherOK)
 	assert.True(t, ok)
@@ -138,4 +138,58 @@ func TestToForecastResponse_ReturnsResponse(t *testing.T) {
 	}
 	respFC := toForecastResponse(domainFC)
 	assert.Equal(t, expected, respFC)
+}
+
+func TestGetWindDirectionByDegree(t *testing.T) {
+	var tests = []struct {
+		deg       float64
+		direction string
+	}{
+		{5, "north"},
+		{355, "north"},
+		{22, "north-northeast"},
+		{44, "northeast"},
+		{66, "east-northeast"},
+		{133, "southeast"},
+		{177, "south"},
+		{200, "south-southwest"},
+		{222, "southwest"},
+		{244, "west-southwest"},
+		{290, "west-northwest"},
+		{309, "northwest"},
+		{333, "north-northwest"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.direction, func(t *testing.T) {
+			assert.Equal(t, tt.direction, getWindDirectionByDegree(tt.deg))
+		})
+	}
+}
+
+func TestGetWindTypeBySpeed(t *testing.T) {
+	var tests = []struct {
+		speed    float64
+		windType string
+	}{
+		{0.3, "Calm"},
+		{1.2, "Light air"},
+		{2.2, "Light breeze"},
+		{4, "Gentle breeze"},
+		{6, "Moderate breeze"},
+		{9, "Fresh breeze"},
+		{12, "Strong breeze"},
+		{14, "Moderate gale"},
+		{17, "Fresh gale"},
+		{22, "Strong gale"},
+		{25, "Whole gale"},
+		{29, "Storm"},
+		{50, "Hurricane"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.windType, func(t *testing.T) {
+			assert.Equal(t, tt.windType, getWindTypeBySpeed(tt.speed))
+		})
+	}
 }

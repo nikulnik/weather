@@ -17,7 +17,7 @@ const (
 )
 
 type OpenWeatherMapClient interface {
-	GetWeather(city, countryCode string) (*domain.CurrentWeather, error)
+	GetCurrentWeather(city, countryCode string) (*domain.CurrentWeather, error)
 	GetForecast(lat, lon string, day int64) (*domain.Forecast, error)
 }
 
@@ -34,7 +34,7 @@ func NewOpenWeatherMapClient(apiKey string) OpenWeatherMapClient {
 	return client
 }
 
-func (c *openWeatherMapClient) GetWeather(city, countryCode string) (*domain.CurrentWeather, error) {
+func (c *openWeatherMapClient) GetCurrentWeather(city, countryCode string) (*domain.CurrentWeather, error) {
 	resp, err := http.Get(
 		fmt.Sprintf(openWeatherCurrentWeatherURLFmt, city, countryCode, c.ApiKey),
 	)
@@ -122,12 +122,12 @@ func toWeatherDomain(weather *OpenWeatherRespXML) (*domain.CurrentWeather, error
 			Name:          weather.Wind.Speed.Name,
 			DirectionName: weather.Wind.Direction.Name,
 		},
-		Sunrise:       sunRiseTime,
-		Sunset:        sunSetTime,
-		Lat:           weather.City.Coord.Lat,
-		Lon:           weather.City.Coord.Lon,
-		City:          weather.City.Name,
-		Country:       weather.City.Country,
+		Sunrise: sunRiseTime,
+		Sunset:  sunSetTime,
+		Lat:     weather.City.Coord.Lat,
+		Lon:     weather.City.Coord.Lon,
+		City:    weather.City.Name,
+		Country: weather.City.Country,
 	}
 	return weatherModel, nil
 }
@@ -151,24 +151,6 @@ func toForecastDomain(forecast *ForecastResp, day int64) (*domain.Forecast, erro
 	return resp, nil
 }
 
-func formatTemp(temp float64) string {
-	return fmt.Sprintf("%v °C", temp)
-}
-
-func formatWind(speed, degree float64) string {
-	return fmt.Sprintf("%s, %v m/s, %s", getWindTypeBySpeed(speed), speed, getWindDirectionByDegree(degree))
-}
-
-func formatPressure(pressure int) string {
-	return fmt.Sprintf("%d hpa", pressure)
-}
-func formatHumidity(humidity int) string {
-	return fmt.Sprintf(`%d %%`, humidity)
-}
-
-func formatSunriseOrSunset(v int) string {
-	return time.Unix(int64(v), 0).Format("15:04")
-}
 func getWindDirectionByDegree(degree float64) string {
 	if degree < 11.25 {
 		return "north"

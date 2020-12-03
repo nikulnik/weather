@@ -3,17 +3,17 @@ package domain
 import "time"
 
 type CurrentWeather struct {
-	Country       string
-	City          string
-	Cloudiness    string
-	Humidity      Humidity
-	Pressure      Pressure
-	Sunrise       time.Time
-	Sunset        time.Time
-	Temperature   Temperature
-	Wind          Wind
-	Lat           string
-	Lon           string
+	Country     string
+	City        string
+	Cloudiness  string
+	Humidity    Humidity
+	Pressure    Pressure
+	Sunrise     time.Time
+	Sunset      time.Time
+	Temperature Temperature
+	Wind        Wind
+	Lat         string
+	Lon         string
 }
 
 type Wind struct {

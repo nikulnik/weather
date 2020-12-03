@@ -11,7 +11,7 @@ type Cache interface {
 	SetWeather(city, country string, value *domain.CurrentWeather)
 	SetForecast(lat, lon string, value *domain.Forecast)
 
-	GetWeather(city, country string) *domain.CurrentWeather
+	GetCurrentWeather(city, country string) *domain.CurrentWeather
 	GetForecast(lat string, lon string) *domain.Forecast
 }
 
@@ -55,7 +55,7 @@ func (c *cache) SetForecast(lat, lon string, value *domain.Forecast) {
 	})
 }
 
-func (c *cache) GetWeather(city, country string) *domain.CurrentWeather {
+func (c *cache) GetCurrentWeather(city, country string) *domain.CurrentWeather {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	return c.dataWeather[city+"*"+country]

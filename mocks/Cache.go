@@ -12,6 +12,22 @@ type Cache struct {
 	mock.Mock
 }
 
+// GetCurrentWeather provides a mock function with given fields: city, country
+func (_m *Cache) GetCurrentWeather(city string, country string) *domain.CurrentWeather {
+	ret := _m.Called(city, country)
+
+	var r0 *domain.CurrentWeather
+	if rf, ok := ret.Get(0).(func(string, string) *domain.CurrentWeather); ok {
+		r0 = rf(city, country)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.CurrentWeather)
+		}
+	}
+
+	return r0
+}
+
 // GetForecast provides a mock function with given fields: lat, lon
 func (_m *Cache) GetForecast(lat string, lon string) *domain.Forecast {
 	ret := _m.Called(lat, lon)
@@ -22,22 +38,6 @@ func (_m *Cache) GetForecast(lat string, lon string) *domain.Forecast {
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Forecast)
-		}
-	}
-
-	return r0
-}
-
-// GetWeather provides a mock function with given fields: city, country
-func (_m *Cache) GetWeather(city string, country string) *domain.CurrentWeather {
-	ret := _m.Called(city, country)
-
-	var r0 *domain.CurrentWeather
-	if rf, ok := ret.Get(0).(func(string, string) *domain.CurrentWeather); ok {
-		r0 = rf(city, country)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.CurrentWeather)
 		}
 	}
 

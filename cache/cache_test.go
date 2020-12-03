@@ -20,7 +20,7 @@ func TestSetAndGetWeather_GetsCorrectWeather(t *testing.T) {
 	cache := NewCache(time.Minute)
 	value := &domain.CurrentWeather{Sunset: time.Now()}
 	cache.SetWeather(city, country, value)
-	assert.Equal(t, value, cache.GetWeather(city, country))
+	assert.Equal(t, value, cache.GetCurrentWeather(city, country))
 }
 
 func TestSetAndGetForecast_ReturnsCorrectForecast(t *testing.T) {
@@ -34,7 +34,7 @@ func TestSetAndGetForecast_ReturnsCorrectForecast(t *testing.T) {
 
 func TestGetForecast_ReturnsNilAfterTimeout(t *testing.T) {
 	t.Parallel()
-	var lat, lon  = "1", "1"
+	var lat, lon = "1", "1"
 	cache := NewCache(time.Millisecond * 3)
 	value := &domain.Forecast{Sunset: 41241}
 	cache.SetForecast(lat, lon, value)
@@ -49,7 +49,7 @@ func TestGetWeather_ReturnsNilAfterTimeout(t *testing.T) {
 	value := &domain.CurrentWeather{Sunset: time.Now()}
 	cache.SetWeather(city, country, value)
 	time.Sleep(time.Millisecond * 4)
-	assert.Nil(t, cache.GetWeather(city, country))
+	assert.Nil(t, cache.GetCurrentWeather(city, country))
 }
 
 func TestCreateForecastKey_ReturnsCorrectKey(t *testing.T) {

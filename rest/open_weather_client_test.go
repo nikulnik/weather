@@ -48,7 +48,7 @@ func TestGetWeather_WhenOpenWeatherReturnsError(t *testing.T) {
 	httpmock.RegisterResponder("GET", path, httpmock.NewErrorResponder(expectedErr))
 
 	client := NewOpenWeatherMapClient(testAPPID)
-	weather, err := client.GetWeather(city, country)
+	weather, err := client.GetCurrentWeather(city, country)
 	assert.Error(t, err)
 	assert.Nil(t, weather)
 }
@@ -65,7 +65,7 @@ func TestGetWeather_WhenOpenWeatherReturnsUnexpectedJSON(t *testing.T) {
 	httpmock.RegisterResponder("GET", path, httpmock.NewJsonResponderOrPanic(200, &wrongResp{"123"}))
 
 	client := NewOpenWeatherMapClient(testAPPID)
-	weather, err := client.GetWeather(city, country)
+	weather, err := client.GetCurrentWeather(city, country)
 	assert.Error(t, err)
 	assert.Nil(t, weather)
 }
@@ -79,7 +79,7 @@ func TestGetWeather_WhenOpenWeatherReturnsValidData_ReturnsWeather(t *testing.T)
 	httpmock.RegisterResponder("GET", path, httpmock.NewBytesResponder(200, openWeatherValidResponseCurrentWeather))
 
 	client := NewOpenWeatherMapClient(testAPPID)
-	weather, err := client.GetWeather(city, country)
+	weather, err := client.GetCurrentWeather(city, country)
 	assert.Nil(t, err)
 	assert.NotNil(t, weather)
 
@@ -167,28 +167,28 @@ func TestToWeatherDomain_ReturnsDomainRepresentation(t *testing.T) {
 				Set:  "2020-12-03T10:50:29",
 			},
 		},
-		Temperature:   Temperature{
+		Temperature: Temperature{
 			Text:  "",
 			Value: "44",
 			Unit:  "celsius",
 		},
-		Humidity:      Humidity{
+		Humidity: Humidity{
 			Value: "12",
 			Unit:  "%",
 		},
-		Pressure:      Pressure{
+		Pressure: Pressure{
 			Value: "31",
 			Unit:  "hPa",
 		},
-		Wind:          Wind{
-			Speed:     Speed{
+		Wind: Wind{
+			Speed: Speed{
 				Name: "light breeze",
 			},
 			Direction: Direction{
 				Name: "south",
 			},
 		},
-		Clouds:        Clouds{
+		Clouds: Clouds{
 			Name: "broken clouds",
 		},
 	}
@@ -196,17 +196,17 @@ func TestToWeatherDomain_ReturnsDomainRepresentation(t *testing.T) {
 	tsr, _ := time.Parse("2006-01-02T15:04:05", weather.City.Sun.Rise)
 	tss, _ := time.Parse("2006-01-02T15:04:05", weather.City.Sun.Rise)
 	expected := &domain.CurrentWeather{
-		Country:"country",
-		City:"city",
-		Cloudiness:"broken clouds",
-		Humidity:domain.Humidity{Value:"12", Unit:"%"},
-		Pressure:domain.Pressure{Value:"31", Unit:"hPa"},
-		Sunrise: tsr,
-		Sunset:tss,
-		Temperature:domain.Temperature{Value:"44", Unit:"celsius"},
-		Wind:domain.Wind{Speed:"", Unit:"", Name:"light breeze", DirectionName:"south"},
-		Lat:"55",
-		Lon:"55",
+		Country:     "country",
+		City:        "city",
+		Cloudiness:  "broken clouds",
+		Humidity:    domain.Humidity{Value: "12", Unit: "%"},
+		Pressure:    domain.Pressure{Value: "31", Unit: "hPa"},
+		Sunrise:     tsr,
+		Sunset:      tss,
+		Temperature: domain.Temperature{Value: "44", Unit: "celsius"},
+		Wind:        domain.Wind{Speed: "", Unit: "", Name: "light breeze", DirectionName: "south"},
+		Lat:         "55",
+		Lon:         "55",
 	}
 
 	result, err := toWeatherDomain(weather)
@@ -214,7 +214,6 @@ func TestToWeatherDomain_ReturnsDomainRepresentation(t *testing.T) {
 	assert.Equal(t, expected, result)
 
 }
-
 
 func TestToWeatherDomain_WhenSunriseTimeIsIncorrect_ReturnsError(t *testing.T) {
 	weather := &OpenWeatherRespXML{
@@ -235,8 +234,6 @@ func TestToWeatherDomain_WhenSunriseTimeIsIncorrect_ReturnsError(t *testing.T) {
 		},
 	}
 
-
 	_, err := toWeatherDomain(weather)
 	assert.Error(t, err)
-
 }

@@ -27,7 +27,7 @@ type weatherHandler struct {
 }
 
 func (h *weatherHandler) GetWeather(params weather.GetWeatherParams) middleware.Responder {
-	weatherData, forecast, err := h.weatherInteractor.GetWeather(params.City, params.Country, params.ForecastDay)
+	weatherData, forecast, err := h.weatherInteractor.GetCurrentWeather(params.City, params.Country, params.ForecastDay)
 	if err != nil {
 		return weather.NewGetWeatherDefault(500).WithPayload(&models.Error{Error: err.Error()})
 	}

@@ -12,6 +12,29 @@ type OpenWeatherMapClient struct {
 	mock.Mock
 }
 
+// GetCurrentWeather provides a mock function with given fields: city, countryCode
+func (_m *OpenWeatherMapClient) GetCurrentWeather(city string, countryCode string) (*domain.CurrentWeather, error) {
+	ret := _m.Called(city, countryCode)
+
+	var r0 *domain.CurrentWeather
+	if rf, ok := ret.Get(0).(func(string, string) *domain.CurrentWeather); ok {
+		r0 = rf(city, countryCode)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.CurrentWeather)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(city, countryCode)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetForecast provides a mock function with given fields: lat, lon, day
 func (_m *OpenWeatherMapClient) GetForecast(lat string, lon string, day int64) (*domain.Forecast, error) {
 	ret := _m.Called(lat, lon, day)
@@ -28,29 +51,6 @@ func (_m *OpenWeatherMapClient) GetForecast(lat string, lon string, day int64) (
 	var r1 error
 	if rf, ok := ret.Get(1).(func(string, string, int64) error); ok {
 		r1 = rf(lat, lon, day)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetWeather provides a mock function with given fields: city, countryCode
-func (_m *OpenWeatherMapClient) GetWeather(city string, countryCode string) (*domain.CurrentWeather, error) {
-	ret := _m.Called(city, countryCode)
-
-	var r0 *domain.CurrentWeather
-	if rf, ok := ret.Get(0).(func(string, string) *domain.CurrentWeather); ok {
-		r0 = rf(city, countryCode)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*domain.CurrentWeather)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(city, countryCode)
 	} else {
 		r1 = ret.Error(1)
 	}

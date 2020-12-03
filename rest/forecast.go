@@ -42,6 +42,6 @@ type Daily struct {
 	Clouds    float64           `json:"clouds"`
 	Pop       float64           `json:"pop"`
 	Uvi       float64           `json:"uvi"`
-	Rain float64 `json:"rain"`
-	Snow float64 `json:"snow"`
+	Rain      float64           `json:"rain"`
+	Snow      float64           `json:"snow"`
 }
