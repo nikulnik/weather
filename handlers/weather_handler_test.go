@@ -3,13 +3,15 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/nikulnik/weather/domain"
 	"github.com/nikulnik/weather/mocks"
 	"github.com/nikulnik/weather/models"
 	"github.com/nikulnik/weather/restapi/operations/weather"
+
 	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 func TestNewWeatherHandler_ReturnsHandler(t *testing.T) {

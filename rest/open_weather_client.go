@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/nikulnik/weather/domain"
 	"net/http"
 	"time"
+
+	"github.com/nikulnik/weather/domain"
 )
 
 const (

@@ -1,10 +1,10 @@
 package cache
 
 import (
-	"github.com/nikulnik/weather/domain"
 	"testing"
 	"time"
 
+	"github.com/nikulnik/weather/domain"
 	"github.com/stretchr/testify/assert"
 )
 

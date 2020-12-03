@@ -5,11 +5,13 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/jarcoal/httpmock"
-	"github.com/nikulnik/weather/domain"
-	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
+
+	"github.com/nikulnik/weather/domain"
+
+	"github.com/jarcoal/httpmock"
+	"github.com/stretchr/testify/assert"
 )
 
 const testAPPID = "12345"

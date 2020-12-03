@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/go-openapi/runtime/middleware"
+	"time"
+
 	"github.com/nikulnik/weather/domain"
 	"github.com/nikulnik/weather/interactors"
 	"github.com/nikulnik/weather/models"
 	"github.com/nikulnik/weather/restapi/operations/weather"
-	"time"
+
+	"github.com/go-openapi/runtime/middleware"
 )
 
 var (
