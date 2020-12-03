@@ -2,6 +2,7 @@ package rest
 
 import "encoding/xml"
 
+// OpenWeatherRespXML represents the current weather response of the openweathermap API
 type OpenWeatherRespXML struct {
 	XMLName       xml.Name      `xml:"current"`
 	Text          string        `xml:",chardata"`

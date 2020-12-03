@@ -1,5 +1,6 @@
 package rest
 
+// ForecastResp represents the forecast response of Openweathermap API
 type ForecastResp struct {
 	Lat            int     `json:"lat"`
 	Lon            int     `json:"lon"`

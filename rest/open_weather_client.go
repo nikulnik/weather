@@ -16,8 +16,11 @@ const (
 	openWeatherErrRespFmt = "openweathermap API responded with error: %s"
 )
 
+// OpenWeatherMapClient - Openweathermap http client
 type OpenWeatherMapClient interface {
+	// GetCurrentWeather gets current weather
 	GetCurrentWeather(city, countryCode string) (*domain.CurrentWeather, error)
+	// GetForecast gets the forecast by latitude and longitude for the given day. 0 - today
 	GetForecast(lat, lon string, day int64) (*domain.Forecast, error)
 }
 
@@ -26,6 +29,7 @@ type openWeatherMapClient struct {
 	httpClient http.Client
 }
 
+// NewOpenWeatherMapClient creates a new client with the given API key
 func NewOpenWeatherMapClient(apiKey string) OpenWeatherMapClient {
 	client := &openWeatherMapClient{
 		ApiKey:     apiKey,
@@ -34,6 +38,7 @@ func NewOpenWeatherMapClient(apiKey string) OpenWeatherMapClient {
 	return client
 }
 
+// GetCurrentWeather gets current weather
 func (c *openWeatherMapClient) GetCurrentWeather(city, countryCode string) (*domain.CurrentWeather, error) {
 	resp, err := http.Get(
 		fmt.Sprintf(openWeatherCurrentWeatherURLFmt, city, countryCode, c.ApiKey),
@@ -63,6 +68,7 @@ func (c *openWeatherMapClient) GetCurrentWeather(city, countryCode string) (*dom
 	return nil, fmt.Errorf(openWeatherErrRespFmt, errResp.Message)
 }
 
+// GetForecast gets the forecast by latitude and longitude for the given day. 0 - today
 func (c *openWeatherMapClient) GetForecast(lat, lon string, day int64) (*domain.Forecast, error) {
 	resp, err := http.Get(
 		fmt.Sprintf(openWeatherForecastURLFmt, lat, lon, c.ApiKey),
@@ -149,97 +155,4 @@ func toForecastDomain(forecast *ForecastResp, day int64) (*domain.Forecast, erro
 		DateTime:    dayFC.Dt,
 	}
 	return resp, nil
-}
-
-func getWindDirectionByDegree(degree float64) string {
-	if degree < 11.25 {
-		return "north"
-	}
-	if degree < 33.75 {
-		return "north-northeast"
-	}
-	if degree < 56.25 {
-		return "northeast"
-	}
-	if degree < 78.75 {
-		return "east-northeast"
-	}
-	if degree < 101.25 {
-		return "east"
-	}
-	if degree < 123.75 {
-		return "east-southeast"
-	}
-	if degree < 146.25 {
-		return "southeast"
-	}
-	if degree < 168.75 {
-		return "south-southeast"
-	}
-	if degree < 191.25 {
-		return "south"
-	}
-	if degree < 213.75 {
-		return "south-southwest"
-	}
-	if degree < 236.25 {
-		return "southwest"
-	}
-	if degree < 258.75 {
-		return "west-southwest"
-	}
-	if degree < 281.25 {
-		return "west"
-	}
-	if degree < 303.75 {
-		return "west-northwest"
-	}
-	if degree < 326.25 {
-		return "northwest"
-	}
-	if degree < 348.25 {
-		return "north-northwest"
-	}
-	return "north"
-}
-
-// m/s
-func getWindTypeBySpeed(speed float64) string {
-	if speed < 0.5 {
-		return "Calm"
-	}
-	if speed < 1.5 {
-		return "Light air"
-	}
-	if speed < 3 {
-		return "Light breeze"
-	}
-	if speed < 5 {
-		return "Gentle breeze"
-	}
-	if speed < 8 {
-		return "Moderate breeze"
-	}
-	if speed < 10.5 {
-		return "Fresh breeze"
-	}
-	if speed < 13.5 {
-		return "Strong breeze"
-	}
-	if speed < 16.5 {
-		return "Moderate gale"
-	}
-	if speed < 20 {
-		return "Fresh gale"
-	}
-	if speed < 23.5 {
-		return "Strong gale"
-	}
-	if speed < 27.5 {
-		return "Whole gale"
-	}
-	if speed < 31.5 {
-		return "Storm"
-	}
-	return "Hurricane"
 }

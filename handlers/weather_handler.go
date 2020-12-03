@@ -15,6 +15,7 @@ var (
 )
 
 type WeatherHandler interface {
+	// Requests Openweathermap API and returns current day weather and forecast
 	GetWeather(params weather.GetWeatherParams) middleware.Responder
 }
 
@@ -26,6 +27,7 @@ type weatherHandler struct {
 	weatherInteractor interactors.WeatherInteractor
 }
 
+// GetWeather requests Openweathermap API and returns current day weather and forecast
 func (h *weatherHandler) GetWeather(params weather.GetWeatherParams) middleware.Responder {
 	weatherData, forecast, err := h.weatherInteractor.GetCurrentWeather(params.City, params.Country, params.ForecastDay)
 	if err != nil {
@@ -38,6 +40,7 @@ func (h *weatherHandler) GetWeather(params weather.GetWeatherParams) middleware.
 	return weather.NewGetWeatherOK().WithPayload(response)
 }
 
+// converts domain current weather to the response model
 func toWeatherResponse(domainWeather *domain.CurrentWeather) *models.WeatherWithForecast {
 	var weatherModel = &models.WeatherWithForecast{
 		LocationName:   fmt.Sprintf("%s, %s", domainWeather.City, domainWeather.Country),
@@ -54,6 +57,7 @@ func toWeatherResponse(domainWeather *domain.CurrentWeather) *models.WeatherWith
 	return weatherModel
 }
 
+// converts domain forecast to the response model
 func toForecastResponse(domainFC *domain.Forecast) *models.Forecast {
 	model := &models.Forecast{
 		Temperature: formatTemp(domainFC.Temperature),
@@ -139,7 +143,6 @@ func getWindDirectionByDegree(degree float64) string {
 	return "north"
 }
 
-// m/s
 func getWindTypeBySpeed(speed float64) string {
 	if speed < 0.5 {
 		return "Calm"

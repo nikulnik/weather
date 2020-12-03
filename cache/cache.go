@@ -5,15 +5,16 @@ import (
 	"time"
 )
 
+// Cache in-memory store
 type Cache interface {
 	Set(key string, value interface{})
 	Get(key string) interface{}
 }
 
 type cache struct {
-	data  map[string]value
-	mux          *sync.Mutex
-	ttl          time.Duration
+	data map[string]value
+	mux  *sync.Mutex
+	ttl  time.Duration
 }
 
 type value struct {
@@ -21,14 +22,17 @@ type value struct {
 	data  interface{}
 }
 
+// NewCache returns a new cache instance
 func NewCache(ttl time.Duration) Cache {
 	return &cache{
-		data:  		make(map[string]value),
-		mux:          &sync.Mutex{},
-		ttl:          ttl,
+		data: make(map[string]value),
+		mux:  &sync.Mutex{},
+		ttl:  ttl,
 	}
 }
 
+// Set stores the value in cache.
+// The value will be removed when the ttl timer expires.
 func (c *cache) Set(key string, val interface{}) {
 	c.mux.Lock()
 	timer := time.NewTimer(c.ttl)
@@ -45,6 +49,8 @@ func (c *cache) Set(key string, val interface{}) {
 	}()
 }
 
+// Get gets the value from cache.
+// Refreshes the ttl timer for the given key on each call.
 func (c *cache) Get(key string) interface{} {
 	c.mux.Lock()
 	defer c.mux.Unlock()

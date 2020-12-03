@@ -37,7 +37,6 @@ func TestGet_ResetsTimeout(t *testing.T) {
 	cache.Set("key", value)
 	time.Sleep(time.Millisecond * 5)
 	cache.Get("key")
-	time.Sleep(time.Millisecond*5)
+	time.Sleep(time.Millisecond * 5)
 	assert.Equal(t, value, cache.Get("key"))
 }
-

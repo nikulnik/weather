@@ -9,7 +9,8 @@ schemes:
 paths:
   /weather:
     get:
-      summary: Get the current weather or the forecast
+      summary: Get the current weather with or without the forecast. If forecast_day parameter is present,
+      returns forecast for the given day. Otherwise 'forecast' field in the response will be empty.
       tags:
         - weather
       operationId: getWeather
@@ -19,13 +20,13 @@ paths:
         - name: city
           required: true
           in: query
-          description: The city to get weather for
+          description: The city name for which the weather is returned
           type: string
           x-nullable: false
         - name: country
           required: true
           in: query
-          description: The country code
+          description: Two-characters country code. i.e. 'us'
           type: string
           minLength: 2
           maxLength: 2

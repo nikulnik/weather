@@ -28,23 +28,12 @@ type Settings struct {
 	OpenWeatherMapKey string `env:"OPENWEATHERMAP_KEY"`
 }
 
-func configureFlags(api *operations.WeatherAPIAPI) {
-	// api.CommandLineOptionsGroups = []swag.CommandLineOptionsGroup{ ... }
-}
+func configureFlags(api *operations.WeatherAPIAPI) {}
 
 func configureAPI(api *operations.WeatherAPIAPI) http.Handler {
-	// configure the api here
 	api.ServeError = errors.ServeError
 
-	// Set your custom logger if needed. Default one is log.Printf
-	// Expected interface func(string, ...interface{})
-	//
-	// Example:
-	// api.Logger = log.Printf
-
 	api.UseSwaggerUI()
-	// To continue using redoc as your UI, uncomment the following line
-	// api.UseRedoc()
 
 	api.JSONConsumer = runtime.JSONConsumer()
 
@@ -54,7 +43,8 @@ func configureAPI(api *operations.WeatherAPIAPI) http.Handler {
 	if err := env.Parse(settings); err != nil {
 		fmt.Printf("%+v\n", err)
 	}
-	cache := cache.NewCache(time.Second * 10)
+
+	cache := cache.NewCache(time.Minute * 2)
 	openWeatherClient := rest.NewOpenWeatherMapClient(settings.OpenWeatherMapKey)
 	wi := interactors.NewWeatherInteractor(openWeatherClient, cache)
 	wh := handlers.NewWeatherHandler(wi)
