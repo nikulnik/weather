@@ -28,7 +28,7 @@ func TestGetWeather_WhenGetWeatherInteractorReturnsError_ReturnsDefaultResponder
 
 	expectedError := errors.New("some error")
 
-	interactorMock.On("GetWeather", params.City, params.Country, params.ForecastDay).Return(nil, expectedError)
+	interactorMock.On("GetWeather", params.City, params.Country, params.ForecastDay).Return(nil, nil, expectedError)
 	r := handler.GetWeather(params)
 	resp, ok := r.(*weather.GetWeatherDefault)
 	assert.True(t, ok)
@@ -45,8 +45,11 @@ func TestGetWeather_HappyPathWithCurrWeatherAndForecast(t *testing.T) {
 	handler := NewWeatherHandler(interactorMock)
 
 	weatherData := &domain.CurrentWeather{
-		Sunset:   123,
-		Humidity: 42,
+		Sunset: time.Now(),
+		Humidity: domain.Humidity{
+			Value: "1",
+			Unit:  "%",
+		},
 	}
 	forecastData := &domain.Forecast{
 		Pressure: 45,
@@ -71,8 +74,11 @@ func TestGetWeather_HappyPathWithCurrWeather(t *testing.T) {
 	handler := NewWeatherHandler(interactorMock)
 
 	weatherData := &domain.CurrentWeather{
-		Sunset:   123,
-		Humidity: 42,
+		Sunset: time.Now(),
+		Humidity: domain.Humidity{
+			Value: "1",
+			Unit:  "%",
+		},
 	}
 
 	interactorMock.On("GetWeather", params.City, params.Country, params.ForecastDay).Return(weatherData, nil, nil)
@@ -84,33 +90,30 @@ func TestGetWeather_HappyPathWithCurrWeather(t *testing.T) {
 
 func TestToResponseWeather_ReturnsResponse(t *testing.T) {
 	domainWeather := &domain.CurrentWeather{
-		Cloudiness: 	"value",
-		Humidity:       56,
-		Pressure:       11,
-		RequestedTime:  time.Now(),
-		Sunrise:        2,
-		Sunset:         2,
-		Temperature:    15,
-		Lat:            15,
-		Lon:            56,
-		City: "city",
-		Country: "country",
+		Country:     "country",
+		City:        "city",
+		Cloudiness:  "broken clouds",
+		Humidity:    domain.Humidity{Value: "12", Unit: "%"},
+		Pressure:    domain.Pressure{Value: "31", Unit: "hPa"},
+		Sunrise:     time.Now(),
+		Sunset:      time.Now(),
+		Temperature: domain.Temperature{Value: "44", Unit: "celsius"},
+		Wind:        domain.Wind{Speed: "", Unit: "", Name: "light breeze", DirectionName: "south"},
+		Lat:         "55",
+		Lon:         "55",
 	}
-	expected := &models.WeatherWithForecast{
-		Cloudiness:domainWeather.Cloudiness,
-		Forecast: (*models.Forecast)(nil),
-		GeoCoordinates:fmt.Sprintf("[%v, %v]", domainWeather.Lat, domainWeather.Lon),
-		Humidity:formatHumidity(domainWeather.Humidity),
-		Pressure:formatPressure(domainWeather.Pressure),
-		RequestedTime: domainWeather.RequestedTime.Format("2006-02-01 15:04:05"),
-		Sunrise:formatSunriseOrSunset(domainWeather.Sunrise),
-		Sunset:formatSunriseOrSunset(domainWeather.Sunset),
-		Temperature:formatTemp(domainWeather.Temperature),
-		Wind:formatWind(domainWeather.WindSpeed, domainWeather.WindDegree),
-		LocationName:fmt.Sprintf("%s, %s", domainWeather.City, domainWeather.Country),
-	}
-	respWeather := toWeatherResponse(domainWeather)
-	assert.Equal(t, expected, respWeather)
+
+	resp := toWeatherResponse(domainWeather)
+
+	assert.Equal(t, fmt.Sprintf("%s, %s", domainWeather.City, domainWeather.Country), resp.LocationName)
+	assert.Equal(t, formatTemp(domainWeather.Temperature.Value), resp.Temperature)
+	assert.Equal(t, fmt.Sprintf("%s, %v m/s, %s", domainWeather.Wind.Name, domainWeather.Wind.Speed, domainWeather.Wind.DirectionName), resp.Wind)
+	assert.Equal(t, domainWeather.Cloudiness, resp.Cloudiness)
+	assert.Equal(t, fmt.Sprintf("%s %s", domainWeather.Pressure.Value, domainWeather.Pressure.Unit), resp.Pressure)
+	assert.Equal(t, fmt.Sprintf(`%s %s`, domainWeather.Humidity.Value, domainWeather.Humidity.Unit), resp.Humidity)
+	assert.Equal(t, domainWeather.Sunrise.Format("15:04"), resp.Sunrise)
+	assert.Equal(t, domainWeather.Sunset.Format("15:04"), resp.Sunset)
+	assert.Equal(t, fmt.Sprintf("[%s, %s]", domainWeather.Lat, domainWeather.Lon), resp.GeoCoordinates)
 }
 
 func TestToForecastResponse_ReturnsResponse(t *testing.T) {
@@ -125,13 +128,13 @@ func TestToForecastResponse_ReturnsResponse(t *testing.T) {
 		WindDegree:  1,
 	}
 	expected := &models.Forecast{
-		Date:time.Unix(int64(domainFC.DateTime), 0).Format("2006-02-01 15:04:05"),
-		Humidity:formatHumidity(domainFC.Humidity),
-		Pressure:formatPressure(domainFC.Pressure),
-		Sunrise:formatSunriseOrSunset(domainFC.Sunrise),
-		Sunset:formatSunriseOrSunset(domainFC.Sunset),
-		Temperature:formatTemp(domainFC.Temperature),
-		Wind:formatWind(domainFC.WindSpeed, domainFC.WindDegree),
+		Date:        time.Unix(int64(domainFC.DateTime), 0).Format("2006-02-01 15:04:05"),
+		Humidity:    formatHumidity(domainFC.Humidity),
+		Pressure:    formatPressure(domainFC.Pressure),
+		Sunrise:     formatSunriseOrSunset(domainFC.Sunrise),
+		Sunset:      formatSunriseOrSunset(domainFC.Sunset),
+		Temperature: formatTemp(domainFC.Temperature),
+		Wind:        formatWind(domainFC.WindSpeed, domainFC.WindDegree),
 	}
 	respFC := toForecastResponse(domainFC)
 	assert.Equal(t, expected, respFC)

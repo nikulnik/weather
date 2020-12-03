@@ -9,10 +9,10 @@ import (
 
 type Cache interface {
 	SetWeather(city, country string, value *domain.CurrentWeather)
-	SetForecast(lat, lon float64, value *domain.Forecast)
+	SetForecast(lat, lon string, value *domain.Forecast)
 
 	GetWeather(city, country string) *domain.CurrentWeather
-	GetForecast(lat, lon float64) *domain.Forecast
+	GetForecast(lat string, lon string) *domain.Forecast
 }
 
 type cache struct {
@@ -43,7 +43,7 @@ func (c *cache) SetWeather(city, country string, value *domain.CurrentWeather) {
 	})
 }
 
-func (c *cache) SetForecast(lat, lon float64, value *domain.Forecast) {
+func (c *cache) SetForecast(lat, lon string, value *domain.Forecast) {
 	key := c.createForecastKey(lat, lon)
 	c.mux.Lock()
 	c.dataForecast[key] = value
@@ -61,12 +61,12 @@ func (c *cache) GetWeather(city, country string) *domain.CurrentWeather {
 	return c.dataWeather[city+"*"+country]
 }
 
-func (c *cache) GetForecast(lat, lon float64) *domain.Forecast {
+func (c *cache) GetForecast(lat string, lon string) *domain.Forecast {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	return c.dataForecast[c.createForecastKey(lat, lon)]
 }
 
-func (c *cache) createForecastKey(lat, lon float64) string {
-	return fmt.Sprintf("%v*%v", lat, lon)
+func (c *cache) createForecastKey(lat, lon string) string {
+	return fmt.Sprintf("%s*%s", lat, lon)
 }

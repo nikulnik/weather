@@ -41,15 +41,15 @@ func (h *weatherHandler) GetWeather(params weather.GetWeatherParams) middleware.
 func toWeatherResponse(domainWeather *domain.CurrentWeather) *models.WeatherWithForecast {
 	var weatherModel = &models.WeatherWithForecast{
 		LocationName:   fmt.Sprintf("%s, %s", domainWeather.City, domainWeather.Country),
-		Temperature:    formatTemp(domainWeather.Temperature),
-		Wind:           formatWind(domainWeather.WindSpeed, domainWeather.WindDegree),
+		Temperature:    formatTemp(domainWeather.Temperature.Value),
+		Wind:           fmt.Sprintf("%s, %v m/s, %s", domainWeather.Wind.Name, domainWeather.Wind.Speed, domainWeather.Wind.DirectionName),
 		Cloudiness:     domainWeather.Cloudiness,
-		Pressure:       formatPressure(domainWeather.Pressure),
-		Humidity:       formatHumidity(domainWeather.Humidity),
-		Sunrise:        formatSunriseOrSunset(domainWeather.Sunrise),
-		Sunset:         formatSunriseOrSunset(domainWeather.Sunset),
-		GeoCoordinates: fmt.Sprintf("[%v, %v]", domainWeather.Lat, domainWeather.Lon),
-		RequestedTime:  domainWeather.RequestedTime.Format("2006-02-01 15:04:05"),
+		Pressure:       fmt.Sprintf("%s %s", domainWeather.Pressure.Value, domainWeather.Pressure.Unit),
+		Humidity:       fmt.Sprintf(`%s %s`, domainWeather.Humidity.Value, domainWeather.Humidity.Unit),
+		Sunrise:        domainWeather.Sunrise.Format("15:04"),
+		Sunset:         domainWeather.Sunset.Format("15:04"),
+		GeoCoordinates: fmt.Sprintf("[%s, %s]", domainWeather.Lat, domainWeather.Lon),
+		RequestedTime:  time.Now().Format("2006-02-01 15:04:05"),
 	}
 	return weatherModel
 }
@@ -67,7 +67,7 @@ func toForecastResponse(domainFC *domain.Forecast) *models.Forecast {
 	return model
 }
 
-func formatTemp(temp float64) string {
+func formatTemp(temp interface{}) string {
 	return fmt.Sprintf("%v °C", temp)
 }
 
@@ -76,7 +76,7 @@ func formatWind(speed, degree float64) string {
 }
 
 func formatPressure(pressure int) string {
-	return fmt.Sprintf("%d hpa", pressure)
+	return fmt.Sprintf("%d hPa", pressure)
 }
 
 func formatHumidity(humidity int) string {

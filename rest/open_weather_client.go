@@ -2,23 +2,23 @@ package rest
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"github.com/nikulnik/weather/domain"
-	"io/ioutil"
 	"net/http"
 	"time"
 )
 
 const (
 	openWeatherCurrentWeatherURLFmt = "http://api.openweathermap.org/data/2.5/weather?q=%s,%s&units=metric&mode=xml&appid=%s"
-	openWeatherForecastURLFmt       = "http://api.openweathermap.org/data/2.5/onecall?lat=%v&lon=%v&exclude=current,minutely,hourly,alerts&units=metric&appid=%s"
+	openWeatherForecastURLFmt       = "http://api.openweathermap.org/data/2.5/onecall?lat=%s&lon=%s&exclude=current,minutely,hourly,alerts&units=metric&appid=%s"
 
 	openWeatherErrRespFmt = "openweathermap API responded with error: %s"
-	)
+)
 
 type OpenWeatherMapClient interface {
 	GetWeather(city, countryCode string) (*domain.CurrentWeather, error)
-	GetForecast(lat, lon float64, day int64) (*domain.Forecast, error)
+	GetForecast(lat, lon string, day int64) (*domain.Forecast, error)
 }
 
 type openWeatherMapClient struct {
@@ -41,15 +41,15 @@ func (c *openWeatherMapClient) GetWeather(city, countryCode string) (*domain.Cur
 	if err != nil {
 		return nil, err
 	}
-	data := &OpenWeatherResp{}
+	data := &OpenWeatherRespXML{}
 	if resp.StatusCode == 200 {
-		decoder := json.NewDecoder(ioutil.NopCloser(resp.Body))
-		decoder.DisallowUnknownFields()
+		decoder := xml.NewDecoder(resp.Body)
+
 		err = decoder.Decode(data)
 		if err != nil {
 			return nil, err
 		}
-		return toWeatherDomain(data), nil
+		return toWeatherDomain(data)
 	}
 
 	errResp := &OpenWeatherErrorResp{}
@@ -63,7 +63,7 @@ func (c *openWeatherMapClient) GetWeather(city, countryCode string) (*domain.Cur
 	return nil, fmt.Errorf(openWeatherErrRespFmt, errResp.Message)
 }
 
-func (c *openWeatherMapClient) GetForecast(lat, lon float64, day int64) (*domain.Forecast, error) {
+func (c *openWeatherMapClient) GetForecast(lat, lon string, day int64) (*domain.Forecast, error) {
 	resp, err := http.Get(
 		fmt.Sprintf(openWeatherForecastURLFmt, lat, lon, c.ApiKey),
 	)
@@ -73,7 +73,7 @@ func (c *openWeatherMapClient) GetForecast(lat, lon float64, day int64) (*domain
 
 	data := &ForecastResp{}
 	if resp.StatusCode == 200 {
-		decoder := json.NewDecoder(ioutil.NopCloser(resp.Body))
+		decoder := json.NewDecoder(resp.Body)
 		decoder.DisallowUnknownFields()
 		err = decoder.Decode(data)
 		if err != nil {
@@ -93,23 +93,43 @@ func (c *openWeatherMapClient) GetForecast(lat, lon float64, day int64) (*domain
 	return nil, fmt.Errorf(openWeatherErrRespFmt, errResp.Message)
 }
 
-func toWeatherDomain(weather *OpenWeatherResp) *domain.CurrentWeather {
-	var weatherModel = &domain.CurrentWeather{
-		Temperature:   weather.Main.Temp,
-		WindSpeed:     weather.Wind.Speed,
-		WindDegree:    weather.Wind.Deg,
-		Cloudiness:    weather.GetCloudsDescription(),
-		Pressure:      weather.Main.Pressure,
-		Humidity:      weather.Main.Humidity,
-		Sunrise:       weather.Sys.Sunrise,
-		Sunset:        weather.Sys.Sunset,
-		RequestedTime: time.Now(),
-		Lat:           weather.Coord.Lat,
-		Lon:           weather.Coord.Lon,
-		City:          weather.Name,
-		Country:       weather.Sys.Country,
+func toWeatherDomain(weather *OpenWeatherRespXML) (*domain.CurrentWeather, error) {
+	sunRiseTime, err := time.Parse("2006-01-02T15:04:05", weather.City.Sun.Rise)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse sunrise time: %s", err)
 	}
-	return weatherModel
+	sunSetTime, err := time.Parse("2006-01-02T15:04:05", weather.City.Sun.Set)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse sunset time: %s", err)
+	}
+	var weatherModel = &domain.CurrentWeather{
+		Temperature: domain.Temperature{
+			Value: weather.Temperature.Value,
+			Unit:  weather.Temperature.Unit,
+		},
+		Cloudiness: weather.Clouds.Name,
+		Pressure: domain.Pressure{
+			Value: weather.Pressure.Value,
+			Unit:  weather.Pressure.Unit,
+		},
+		Humidity: domain.Humidity{
+			Value: weather.Humidity.Value,
+			Unit:  weather.Humidity.Unit,
+		},
+		Wind: domain.Wind{
+			Speed:         weather.Wind.Speed.Value,
+			Unit:          weather.Wind.Speed.Unit,
+			Name:          weather.Wind.Speed.Name,
+			DirectionName: weather.Wind.Direction.Name,
+		},
+		Sunrise:       sunRiseTime,
+		Sunset:        sunSetTime,
+		Lat:           weather.City.Coord.Lat,
+		Lon:           weather.City.Coord.Lon,
+		City:          weather.City.Name,
+		Country:       weather.City.Country,
+	}
+	return weatherModel, nil
 }
 
 func toForecastDomain(forecast *ForecastResp, day int64) (*domain.Forecast, error) {

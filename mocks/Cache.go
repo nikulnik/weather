@@ -13,11 +13,11 @@ type Cache struct {
 }
 
 // GetForecast provides a mock function with given fields: lat, lon
-func (_m *Cache) GetForecast(lat float64, lon float64) *domain.Forecast {
+func (_m *Cache) GetForecast(lat string, lon string) *domain.Forecast {
 	ret := _m.Called(lat, lon)
 
 	var r0 *domain.Forecast
-	if rf, ok := ret.Get(0).(func(float64, float64) *domain.Forecast); ok {
+	if rf, ok := ret.Get(0).(func(string, string) *domain.Forecast); ok {
 		r0 = rf(lat, lon)
 	} else {
 		if ret.Get(0) != nil {
@@ -45,7 +45,7 @@ func (_m *Cache) GetWeather(city string, country string) *domain.CurrentWeather 
 }
 
 // SetForecast provides a mock function with given fields: lat, lon, value
-func (_m *Cache) SetForecast(lat float64, lon float64, value *domain.Forecast) {
+func (_m *Cache) SetForecast(lat string, lon string, value *domain.Forecast) {
 	_m.Called(lat, lon, value)
 }
 

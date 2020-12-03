@@ -86,7 +86,7 @@ definitions:
     properties:
       temperature:
         type: string
-      wind:
+      wind_speed:
         type: string
       pressure:
         type: string

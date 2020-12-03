@@ -6,14 +6,32 @@ type CurrentWeather struct {
 	Country       string
 	City          string
 	Cloudiness    string
-	Humidity      int
-	Pressure      int
-	RequestedTime time.Time
-	Sunrise       int
-	Sunset        int
-	Temperature   float64
-	WindSpeed     float64
-	WindDegree    float64
-	Lat           float64
-	Lon           float64
+	Humidity      Humidity
+	Pressure      Pressure
+	Sunrise       time.Time
+	Sunset        time.Time
+	Temperature   Temperature
+	Wind          Wind
+	Lat           string
+	Lon           string
+}
+
+type Wind struct {
+	Speed         string
+	Unit          string
+	Name          string
+	DirectionName string
+}
+
+type Temperature struct {
+	Value string
+	Unit  string
+}
+type Pressure struct {
+	Value string
+	Unit  string
+}
+type Humidity struct {
+	Value string
+	Unit  string
 }

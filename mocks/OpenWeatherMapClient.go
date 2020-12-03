@@ -13,11 +13,11 @@ type OpenWeatherMapClient struct {
 }
 
 // GetForecast provides a mock function with given fields: lat, lon, day
-func (_m *OpenWeatherMapClient) GetForecast(lat float64, lon float64, day int64) (*domain.Forecast, error) {
+func (_m *OpenWeatherMapClient) GetForecast(lat string, lon string, day int64) (*domain.Forecast, error) {
 	ret := _m.Called(lat, lon, day)
 
 	var r0 *domain.Forecast
-	if rf, ok := ret.Get(0).(func(float64, float64, int64) *domain.Forecast); ok {
+	if rf, ok := ret.Get(0).(func(string, string, int64) *domain.Forecast); ok {
 		r0 = rf(lat, lon, day)
 	} else {
 		if ret.Get(0) != nil {
@@ -26,7 +26,7 @@ func (_m *OpenWeatherMapClient) GetForecast(lat float64, lon float64, day int64)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(float64, float64, int64) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, int64) error); ok {
 		r1 = rf(lat, lon, day)
 	} else {
 		r1 = ret.Error(1)
