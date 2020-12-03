@@ -9,8 +9,7 @@ schemes:
 paths:
   /weather:
     get:
-      summary: Get the current weather with or without the forecast. If forecast_day parameter is present,
-      returns forecast for the given day. Otherwise 'forecast' field in the response will be empty.
+      summary: Get the current weather with or without the forecast. If forecast_day parameter is present returns forecast for the given day as a part of response. Otherwise 'forecast' field in the response will be empty.
       tags:
         - weather
       operationId: getWeather
