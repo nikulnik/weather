@@ -5,6 +5,7 @@ package restapi
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -43,7 +44,9 @@ func configureAPI(api *operations.WeatherAPIAPI) http.Handler {
 	if err := env.Parse(settings); err != nil {
 		fmt.Printf("%+v\n", err)
 	}
-
+	if settings.OpenWeatherMapKey == "" {
+		log.Fatal("OPENWEATHERMAP_KEY env is empty")
+	}
 	cache := cache.NewCache(time.Minute * 2)
 	openWeatherClient := rest.NewOpenWeatherMapClient(settings.OpenWeatherMapKey)
 	wi := interactors.NewWeatherInteractor(openWeatherClient, cache)

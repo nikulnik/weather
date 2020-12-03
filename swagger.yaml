@@ -88,6 +88,8 @@ definitions:
         type: string
       wind_speed:
         type: string
+      wind:
+        type: string
       pressure:
         type: string
       humidity:
